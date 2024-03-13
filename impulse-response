@@ -1,0 +1,44 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import sounddevice as sd
+
+def generate_mls(length):
+    # Generate Maximum Length Sequence (MLS)
+    n = int(np.log2(length)) - 1
+    sequence = np.random.randint(0, 2, size=(2 ** n) - 1)
+    mls = np.array(sequence.tolist() * int(length / (2 ** n - 1)), dtype=np.float32)
+    mls -= 0.5
+    mls *= 2
+    return mls
+
+def play_and_capture(mls, sample_rate):
+    print("Playing MLS...")
+    sd.play(mls, samplerate=sample_rate, blocking=True)
+    print("Recording...")
+    recording = sd.rec(len(mls), samplerate=sample_rate, channels=1, dtype='float64')
+    sd.wait()  # Wait until recording is finished
+    print("Recording finished.")
+    return recording.flatten()
+
+def plot_impulse_response(impulse_response, sample_rate):
+    time = np.arange(len(impulse_response)) / sample_rate
+    plt.figure(figsize=(10, 6))
+    plt.plot(time, impulse_response)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.title('Room Impulse Response')
+    plt.grid(True)
+    plt.show()
+
+# Define parameters
+length = 2**15  # Length of MLS signal
+sample_rate = 44100  # Hz
+
+# Generate MLS
+mls = generate_mls(length)
+
+# Play MLS and capture the response
+impulse_response = play_and_capture(mls, sample_rate)
+
+# Plot the impulse response
+plot_impulse_response(impulse_response, sample_rate)
